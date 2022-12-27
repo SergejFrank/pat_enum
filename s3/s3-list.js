@@ -219,11 +219,11 @@ if (typeof AUTO_TITLE != 'undefined' && AUTO_TITLE == true) {
       s3_rest_url += '&marker=' + marker;
     }
   
-    cors_bypass_url = "https://api.allorigins.win/get?url="
+    cors_bypass_url = "https://api.codetabs.com/v1/proxy/?quest="
   
     //s3_rest_url = decodeURIComponent(s3_rest_url);
     
-    return cors_bypass_url+encodeURIComponent(s3_rest_url);
+    return cors_bypass_url+s3_rest_url;
   }
   
   function getInfoFromS3Data(xml) {
