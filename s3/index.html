@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>S3 Bucket Listing Generator</title>
+</head>
+
+<body>
+  <div id="navigation"></div>
+  <div id="listing"></div>
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    var params = new URLSearchParams(window.location.search)
+    
+    if (params.get("bucket") == "" || params.get("bucket") == null) {
+      bucket = prompt("Welches Bucket darf es denn sein?");
+      params.set("bucket",bucket)
+    }
+
+    var S3BL_IGNORE_PATH = true;
+    var BUCKET_URL = 'https://' + params.get("bucket") + '.s3.amazonaws.com';
+  </script>
+
+  <script src="s3-list.js"></script>
+
+</body>
+
+</html>
