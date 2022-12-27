@@ -306,7 +306,7 @@ if (typeof AUTO_TITLE != 'undefined' && AUTO_TITLE == true) {
       if (item.Type === 'directory') {
         if (S3BL_IGNORE_PATH) {
           item.href = location.protocol + '//' + location.hostname +
-                      location.pathname + '?prefix=' + encodePath(item.Key);
+                      location.pathname + "?bucket=" +params.get("bucket") + '&prefix=' + encodePath(item.Key);
         } else {
           item.href = encodePath(item.keyText);
         }
@@ -314,7 +314,6 @@ if (typeof AUTO_TITLE != 'undefined' && AUTO_TITLE == true) {
         item.href = BUCKET_WEBSITE_URL + '/' + encodePath(item.Key);
       }
 
-      item.href =  item.href + "&bucket=" +params.get("bucket") 
       var row = renderRow(item, cols);
       if (!EXCLUDE_FILE.some(function(exclude){ return testExcludeFilter(exclude, item.Key); }))
         content.push(row + '\n');
