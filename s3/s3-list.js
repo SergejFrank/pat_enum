@@ -120,11 +120,6 @@ if (typeof AUTO_TITLE != 'undefined' && AUTO_TITLE == true) {
     $('#listing').html('loading ....');
     $.get(s3_rest_url)
         .done(function(data) {
-  
-          console.log(data)
-  
-          data = data.contents
-  
           // clear loading notice
           $('#listing').html('');
           var xml = $(data);
