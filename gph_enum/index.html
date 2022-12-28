@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub PAT Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            font-size: 16px;
+            font-weight: 300;
+            color: #dce2e7;
+            background: #02040a;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin-top: 0;
+        }
+
+        #app {
+            display: flex;
+        }
+
+        .main-content {
+            min-height: 100vh;
+            flex-grow: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100%;
+            padding: 1rem;
+            color: #fff;
+            background-color: #0d1116;
+        }
+
+        .sidebar__title {
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .sidebar__title::after {
+            content: "";
+            display: block;
+            width: 30px;
+            height: 1px;
+            margin: 1.5rem auto 2rem;
+            background: currentcolor;
+        }
+
+        .sidebar__pat {
+            width: 100%;
+            background-color: #010409;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            padding: 5px 12px;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .sidebar__user {
+            text-align: center;
+        }
+
+        .sidebar__user .avatar {
+            width: 100px;
+            height: auto;
+            border-radius: 50%;
+        }
+
+        .sidebar__user .username {
+            margin: 0.7rem 0 0.2rem;
+            font-size: 1.25em;
+            font-weight: 400;
+        }
+
+        .sidebar__user .login {
+            color: #dce2e7;
+            font-size: 1em;
+            font-weight: 400;
+        }
+
+        .sidebar__user .bio {
+            color: #dce2e7;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .sidebar__user .badges {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .sidebar__user .badges .badge {
+            margin: 0 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: #21262d;
+            font-size: 0.85em;
+            border-radius: 4px;
+        }
+
+        .sidebar__user .orgs .org {
+            margin: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: #21262d;
+            font-size: 0.85em;
+            border-radius: 4px;
+        }
+
+        .sidebar__user .orgs h4 {
+            padding-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar__user .github-link {
+            display: inline-block;
+            margin-top: 2rem;
+            font-size: 0.85em;
+            text-decoration: none;
+            color: #8c949e;
+        }
+
+        .repositories {
+            padding: 1rem;
+        }
+
+        .repositories__title {
+            color: #fff;
+        }
+
+        .repositories ul {
+            padding-left: 0;
+        }
+
+        .repositories ul .repositories__owner {
+            color: #21262d;
+        }
+
+        .repositories ul .repositories__permission {
+            color: #8c949e;
+            font-size: 0.8em;
+        }
+
+        .repositories ul .repositories__permission span {
+            display: inline-block;
+            padding-right: 0.5rem;
+        }
+
+        .repositories ul .repo {
+            list-style: none;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(229, 255, 222, 0.1);
+        }
+
+
+        .repositories ul .repo h4 {
+            margin-bottom: 0.5rem;
+            color: #57a6ff;
+        }
+
+        .repositories ul .repo p {
+            padding: 0;
+            margin: 0 0 0.5rem;
+        }
+
+        .repositories ul .repo a {
+            text-decoration: none;
+            color: #8c949e;
+            font-size: 0.85em;
+        }
+    </style>
+
+</head>
+
+<body translate="no">
+    <!-- HELLO REACT TEMPLATE-->
+    <div id="root"></div>
+
+    <script src='https://unpkg.com/react@16/umd/react.development.js'></script>
+    <script src='https://unpkg.com/react-dom@16/umd/react-dom.development.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js'></script>
+    
+    <script id="rendered-js">
+        function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+        /****************************
+        GitHub PAT Explorer 
+        ***************************/
+
+        const org_render = (orgs) => {
+            return orgs.map(org => {
+                return React.createElement("div", { className: "org", key: org.id }, org.login)
+            })
+        }
+
+        // Sidebar
+        const Sidebar = (props) =>
+            React.createElement("div", { className: "sidebar" },
+                React.createElement("h1", { className: "sidebar__title" }, props.appTitle),
+
+                React.createElement("input", { className: "sidebar__pat", placeholder: "Github access token", onChange: props.onPatChange }),
+
+                props.user != null && props.orgs ?
+                    React.createElement("div", { className: "sidebar__user" },
+                        React.createElement("img", { className: "avatar", src: props.user.avatar_url }),
+                        React.createElement("h2", { className: "username" }, props.user.name),
+                        React.createElement("h4", { className: "login" }, props.user.login),
+                        React.createElement("div", { className: "bio" }, props.user.email),
+                        React.createElement("div", { className: "orgs" },
+                            React.createElement("h4", null, "Organizations"),
+                            React.createElement("div", { className: "org" }, "Personal"),
+                            org_render(props.orgs)),
+                        React.createElement("a", { className: "github-link", target: "_blank", href: props.user.html_url }, "See on GitHub")) :
+                    React.createElement("p", null, "Loading..."));
+
+
+
+        // Repositories
+        const Repositiories = (props) =>
+            React.createElement("div", { className: "repositories" },
+                React.createElement("h2", { className: "repositories__title" }, "Repositories"),
+                props.repos != null ?
+                    Object.keys(props.repos).map((repo_cat, i) =>
+
+                        React.createElement("ul", { key: repo_cat },
+                            React.createElement("h3", { className: "repositories__owner" }, repo_cat),
+                            props.repos[repo_cat].map((repo) =>
+                                React.createElement("li", { className: "repo", key: repo.id },
+                                    React.createElement("h4", null, repo.name),
+                                    React.createElement("p", null, repo.description),
+                                    React.createElement("p", { className: "repositories__permission" },
+                                        Object.keys(repo.permissions).map((repo_cat, i) => { return React.createElement("span", { key: "span_"+repo_cat+"_"+repo.id }, "" + repo_cat + ": " + repo.permissions[repo_cat], React.createElement("br")) }),
+                                    )
+                                )))) :
+
+                    React.createElement("p", null, "Loading..."));
+
+        /**
+         * ROOT COMPONENT
+         */
+        class MyApp extends React.Component {
+            constructor(...args) {
+                super(...args); _defineProperty(this, "state",
+                    {
+                        appTitle: 'GitHub Explorer',
+                        apiUrl: 'https://api.github.com/',
+                        user: null,
+                        repos: null
+                    });
+                this.onPatChange = this.handleOnChange.bind( this );
+            }
+
+            handleOnChange(e) {
+                const token = e.target.value
+                const ctx = this;
+                const headers = { headers: { 'Authorization': `token `+token } }
+                // Initial User
+                axios.get(this.state.apiUrl + 'user', headers).
+                    then(function (response) {
+                        ctx.setState({
+                            user: response.data,
+                            repos: {}
+                        });
+
+                        //console.log(ctx.state.user);
+
+                        // search for user's repos
+                        axios.get(ctx.state.apiUrl + 'user/repos', headers).
+                            then(function (res) {
+
+                                ctx.setState(prevState => ({
+                                    repos: {                   // object that we want to update
+                                        ...prevState.repos,    // keep all other key-value pairs
+                                        Personal: res.data.filter(repo => repo.visibility != "public")
+                                    }
+                                }))
+
+                            }).
+                            catch(function (error) {
+                                console.log(error);
+                            });
+
+                        // get user's orgs
+                        axios.get(ctx.state.apiUrl + 'user/orgs', headers).
+                            then(function (res) {
+                                ctx.setState({
+                                    orgs: res.data
+                                });
+
+                                //todo: get all private/internal (!= public) repos of org
+                                // search for user's repos
+                                ctx.state.orgs.forEach(org => {
+                                    axios.get(org.repos_url, headers).
+                                        then(function (res) {
+
+                                            ctx.setState(prevState => ({
+                                                repos: {                   // object that we want to update
+                                                    ...prevState.repos,    // keep all other key-value pairs
+                                                    [org.login]: res.data.filter(repo => repo.visibility != "public")
+                                                }
+                                            }))
+
+                                        }).
+                                        catch(function (error) {
+                                            console.log(error);
+                                        });
+
+                                })
+
+                            }).
+                            catch(function (error) {
+                                console.log(error);
+                            });
+                    }).
+                    catch(function (error) {
+                        console.log(error);
+                    });
+            }
+
+            render() {
+                return (
+                    React.createElement("div", { id: "app" },
+                        React.createElement("div", { className: "wrap-sidebar" },
+                            React.createElement(Sidebar, {
+                                onPatChange: this.onPatChange,
+                                appTitle: this.state.appTitle,
+                                user: this.state.user,
+                                orgs: this.state.orgs,
+                                repos: this.state.repos
+                            })),
+
+                        React.createElement("main", { className: "main-content" },
+                            React.createElement(Repositiories, { repos: this.state.repos }),
+                            React.createElement("footer", null))));
+
+            }
+        }
+
+        // Render root components
+        ReactDOM.render(
+            React.createElement(MyApp, null),
+            document.getElementById('root')
+        );
+//# sourceURL=pen.js
+    </script>
+
+</body>
+
+</html>
