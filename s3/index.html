@@ -14,11 +14,10 @@
     var params = new URLSearchParams(window.location.search)
     
     if (params.get("bucket") == "" || params.get("bucket") == null) {
-      bucket = prompt("Welches Bucket darf es denn sein?");
+      bucket = prompt("Yo, which bucket you want, brah? Gotta make sure we're grabbing the right one for the job!");
       params.set("bucket",bucket)
     }
 
-    var S3BL_IGNORE_PATH = true;
     var BUCKET_URL = 'https://' + params.get("bucket") + '.s3.amazonaws.com';
   </script>
 
