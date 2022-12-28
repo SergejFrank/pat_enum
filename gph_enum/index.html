@@ -152,6 +152,14 @@
             color: #21262d;
         }
 
+        .repositories ul .repositories__visibility {
+            margin: 0 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: #21262d;
+            font-size: 0.7em;
+            border-radius: 4px;
+        }
+
         .repositories ul .repositories__permission {
             color: #8c949e;
             font-size: 0.8em;
@@ -173,6 +181,7 @@
         .repositories ul .repo h4 {
             margin-bottom: 0.5rem;
             color: #57a6ff;
+            display: inline-block;
         }
 
         .repositories ul .repo p {
@@ -196,7 +205,7 @@
     <script src='https://unpkg.com/react@16/umd/react.development.js'></script>
     <script src='https://unpkg.com/react-dom@16/umd/react-dom.development.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js'></script>
-    
+
     <script id="rendered-js">
         function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
         /****************************
@@ -243,6 +252,7 @@
                             props.repos[repo_cat].map((repo) =>
                                 React.createElement("li", { className: "repo", key: repo.id },
                                     React.createElement("h4", null, repo.name),
+                                    React.createElement("span", { className: "repositories__visibility"}, repo.visibility),
                                     React.createElement("p", null, repo.description),
                                     React.createElement("p", { className: "repositories__permission" },
                                         Object.keys(repo.permissions).map((repo_cat, i) => { return React.createElement("span", { key: "span_"+repo_cat+"_"+repo.id }, "" + repo_cat + ": " + repo.permissions[repo_cat], React.createElement("br")) }),
@@ -287,7 +297,7 @@
                                 ctx.setState(prevState => ({
                                     repos: {                   // object that we want to update
                                         ...prevState.repos,    // keep all other key-value pairs
-                                        Personal: res.data.filter(repo => repo.visibility != "public")
+                                        Personal: res.data
                                     }
                                 }))
 
@@ -312,7 +322,7 @@
                                             ctx.setState(prevState => ({
                                                 repos: {                   // object that we want to update
                                                     ...prevState.repos,    // keep all other key-value pairs
-                                                    [org.login]: res.data.filter(repo => repo.visibility != "public")
+                                                    [org.login]: res.data
                                                 }
                                             }))
 
