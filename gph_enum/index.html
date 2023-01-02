@@ -227,13 +227,7 @@
         ***************************/
 
         const org_render = (repos, toggleRepoCatVisibility) => {
-
-            const ordered_repos = Object.fromEntries(
-                Object.entries(repos)
-                    .sort(([key1], [key2]) => key1 === 'Personal' ? -1 : key2 === 'Personal' ? 1 : key1.localeCompare(key2))
-            );
-
-            return Object.keys(ordered_repos).map((org, i) => {
+            return Object.keys(repos).map((org, i) => {
                 return React.createElement("div", { className: repos[org].showing ? "org active" : "org", key: org, onClick: () => toggleRepoCatVisibility(org) }, org)
             })
         }
@@ -245,7 +239,7 @@
 
                 React.createElement("input", { className: "sidebar__pat", placeholder: "Github access token", onChange: props.onPatChange }),
 
-                props.user != null && props.orgs ?
+                props.user != null && props.repos ?
                     React.createElement("div", { className: "sidebar__user" },
                         React.createElement("img", { className: "avatar", src: props.user.avatar_url }),
                         React.createElement("h2", { className: "username" }, props.user.name),
@@ -353,12 +347,8 @@
                         // get user's orgs
                         axios.get(ctx.state.apiUrl + 'user/orgs', headers).
                             then(function (res) {
-                                ctx.setState({
-                                    orgs: res.data
-                                });
 
-                                //todo: get all private/internal (!= public) repos of org
-                                // search for user's repos
+                                // search for orgs's repos
                                 ctx.state.orgs.forEach(org => {
                                     axios.get(org.repos_url, headers).
                                         then(function (res) {
@@ -389,6 +379,12 @@
             }
 
             render() {
+
+                const sorted_repos = this.state.repos == null? {} : Object.fromEntries(
+                    Object.entries(this.state.repos)
+                        .sort(([key1], [key2]) => key1 === 'Personal' ? -1 : key2 === 'Personal' ? 1 : key1.localeCompare(key2))
+                )
+
                 return (
                     React.createElement("div", { id: "app" },
                         React.createElement("div", { className: "wrap-sidebar" },
@@ -396,14 +392,13 @@
                                 onPatChange: this.onPatChange,
                                 appTitle: this.state.appTitle,
                                 user: this.state.user,
-                                orgs: this.state.orgs,
-                                repos: this.state.repos,
+                                repos: sorted_repos,
                                 toggleRepoCatVisibility: this.toggleRepoCatVisibility
                             })),
 
                         React.createElement("main", { className: "main-content" },
                             React.createElement(Repositiories, {
-                                repos: this.state.repos
+                                repos: sorted_repos
                             }),
                             React.createElement("footer", null))));
 
