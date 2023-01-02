@@ -116,11 +116,16 @@
         }
 
         .sidebar__user .orgs .org {
+            cursor: pointer;
             margin: 0.5rem;
             padding: 0.25rem 0.5rem;
             background: #21262d;
             font-size: 0.85em;
             border-radius: 4px;
+        }
+
+        .sidebar__user .orgs .org.active {
+            background-color: #02040a;
         }
 
         .sidebar__user .orgs h4 {
@@ -148,6 +153,11 @@
             padding-left: 0;
         }
 
+
+        .repositories ul a {
+            text-decoration: none;
+        }
+
         .repositories ul .repositories__owner {
             color: #21262d;
         }
@@ -158,6 +168,10 @@
             background: #21262d;
             font-size: 0.7em;
             border-radius: 4px;
+        }
+
+        .repositories ul .repositories__visibility.public {
+            background: #238636;
         }
 
         .repositories ul .repositories__permission {
@@ -212,9 +226,15 @@
         GitHub PAT Explorer 
         ***************************/
 
-        const org_render = (orgs) => {
-            return orgs.map(org => {
-                return React.createElement("div", { className: "org", key: org.id }, org.login)
+        const org_render = (repos, toggleRepoCatVisibility) => {
+
+            const ordered_repos = Object.fromEntries(
+                Object.entries(repos)
+                    .sort(([key1], [key2]) => key1 === 'Personal' ? -1 : key2 === 'Personal' ? 1 : key1.localeCompare(key2))
+            );
+
+            return Object.keys(ordered_repos).map((org, i) => {
+                return React.createElement("div", { className: repos[org].showing ? "org active" : "org", key: org, onClick: () => toggleRepoCatVisibility(org) }, org)
             })
         }
 
@@ -233,8 +253,7 @@
                         React.createElement("div", { className: "bio" }, props.user.email),
                         React.createElement("div", { className: "orgs" },
                             React.createElement("h4", null, "Organizations"),
-                            React.createElement("div", { className: "org" }, "Personal"),
-                            org_render(props.orgs)),
+                            org_render(props.repos, props.toggleRepoCatVisibility)),
                         React.createElement("a", { className: "github-link", target: "_blank", href: props.user.html_url }, "See on GitHub")) :
                     React.createElement("p", null, "Loading..."));
 
@@ -246,18 +265,22 @@
                 React.createElement("h2", { className: "repositories__title" }, "Repositories"),
                 props.repos != null ?
                     Object.keys(props.repos).map((repo_cat, i) =>
-
-                        React.createElement("ul", { key: repo_cat },
-                            React.createElement("h3", { className: "repositories__owner" }, repo_cat),
-                            props.repos[repo_cat].map((repo) =>
-                                React.createElement("li", { className: "repo", key: repo.id },
-                                    React.createElement("h4", null, repo.name),
-                                    React.createElement("span", { className: "repositories__visibility"}, repo.visibility),
-                                    React.createElement("p", null, repo.description),
-                                    React.createElement("p", { className: "repositories__permission" },
-                                        Object.keys(repo.permissions).map((repo_cat, i) => { return React.createElement("span", { key: "span_"+repo_cat+"_"+repo.id }, "" + repo_cat + ": " + repo.permissions[repo_cat], React.createElement("br")) }),
-                                    )
-                                )))) :
+                        !props.repos[repo_cat].showing ? "" :
+                            React.createElement("ul", { key: repo_cat },
+                                React.createElement("a", { href: "https://github.com/" + repo_cat, target: "_blank" },
+                                    React.createElement("h3", { className: "repositories__owner" }, repo_cat)
+                                ),
+                                props.repos[repo_cat].repos.map((repo) =>
+                                    React.createElement("li", { className: "repo", key: repo.id },
+                                        repo.visibility == "public" ?
+                                        /* public */    React.createElement("a", { href: repo.html_url, target: "_blank" }, React.createElement("h4", null, repo.name)) :
+                                        /* private */    React.createElement("h4", null, repo.name),
+                                        React.createElement("span", { className: `repositories__visibility ${repo.visibility}` }, repo.visibility),
+                                        React.createElement("p", null, repo.description),
+                                        React.createElement("p", { className: "repositories__permission" },
+                                            Object.keys(repo.permissions).map((repo_cat, i) => { return React.createElement("span", { key: "span_" + repo_cat + "_" + repo.id }, "" + repo_cat + ": " + repo.permissions[repo_cat], React.createElement("br")) }),
+                                        )
+                                    )))) :
 
                     React.createElement("p", null, "Loading..."));
 
@@ -271,15 +294,36 @@
                         appTitle: 'GitHub Explorer',
                         apiUrl: 'https://api.github.com/',
                         user: null,
-                        repos: null
+                        repos: null,
                     });
-                this.onPatChange = this.handleOnChange.bind( this );
+                this.onPatChange = this.handleOnChange.bind(this);
+                this.toggleRepoCatVisibility = this.toggleRepoCatVisibility.bind(this);
+                /* this.handleOnChange({ target: { value: "ghp_..." } }) */
+            }
+
+            toggleRepoCatVisibility(org) {
+                const ctx = this;
+                console.log(org)
+
+                ctx.setState(prevState => {
+                    return {
+                        repos: {
+                            ...prevState.repos,
+                            [org]: {
+                                ...prevState.repos[org],
+                                showing: !prevState.repos[org].showing
+                            }
+                        }
+                    }
+                });
+
+
             }
 
             handleOnChange(e) {
                 const token = e.target.value
                 const ctx = this;
-                const headers = { headers: { 'Authorization': `token `+token } }
+                const headers = { headers: { 'Authorization': `token ` + token } }
                 // Initial User
                 axios.get(this.state.apiUrl + 'user', headers).
                     then(function (response) {
@@ -297,7 +341,7 @@
                                 ctx.setState(prevState => ({
                                     repos: {                   // object that we want to update
                                         ...prevState.repos,    // keep all other key-value pairs
-                                        Personal: res.data
+                                        Personal: { showing: true, repos: res.data }
                                     }
                                 }))
 
@@ -322,7 +366,7 @@
                                             ctx.setState(prevState => ({
                                                 repos: {                   // object that we want to update
                                                     ...prevState.repos,    // keep all other key-value pairs
-                                                    [org.login]: res.data
+                                                    [org.login]: { showing: false, repos: res.data }
                                                 }
                                             }))
 
@@ -353,11 +397,14 @@
                                 appTitle: this.state.appTitle,
                                 user: this.state.user,
                                 orgs: this.state.orgs,
-                                repos: this.state.repos
+                                repos: this.state.repos,
+                                toggleRepoCatVisibility: this.toggleRepoCatVisibility
                             })),
 
                         React.createElement("main", { className: "main-content" },
-                            React.createElement(Repositiories, { repos: this.state.repos }),
+                            React.createElement(Repositiories, {
+                                repos: this.state.repos
+                            }),
                             React.createElement("footer", null))));
 
             }
