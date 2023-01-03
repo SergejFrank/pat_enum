@@ -349,7 +349,7 @@
                             then(function (res) {
 
                                 // search for orgs's repos
-                                ctx.state.orgs.forEach(org => {
+                                res.data.forEach(org => {
                                     axios.get(org.repos_url, headers).
                                         then(function (res) {
 
