@@ -197,7 +197,7 @@
         }
 
         .repositories ul .repositories__visibility.private {
-            background: #238636;
+            background: #f85249;
         }
 
         .repositories ul .repositories__permission {
@@ -282,6 +282,12 @@
                                 Object.keys(props.repo_permissions_filter).map((permission, i) => React.createElement("li", { className: `${props.repo_permissions_filter[permission] ? "active" : ""}`, onClick: () => props.togglePerissionfilter(permission), key: permission }, permission))
                             )
                         ),
+                        React.createElement("div", { className: "sidebar__permission_filter sidebar-box" },
+                            React.createElement("h4", null, "Visibility"),
+                            React.createElement("ul", { className: "filter-list" },
+                                Object.keys(props.visibility_filter).map((visibility, i) => React.createElement("li", { className: `${props.visibility_filter[visibility] ? "active" : ""}`, onClick: () => props.toggleVisibilityFilter(visibility), key: visibility }, visibility))
+                            )
+                        ),
                         React.createElement("a", { className: "github-link", target: "_blank", href: props.user.html_url }, "See on GitHub")) :
                     React.createElement("p", null, "Loading..."));
 
@@ -323,6 +329,10 @@
                         apiUrl: 'https://api.github.com/',
                         user: null,
                         repos: null,
+                        visibility_filter: {
+                            public: false,
+                            private: false
+                        },
                         repo_permissions_filter: {
                             admin: false,
                             maintain: false,
@@ -334,12 +344,25 @@
                 this.onPatChange = this.handleOnChange.bind(this);
                 this.toggleRepoCatVisibility = this.toggleRepoCatVisibility.bind(this);
                 this.togglePerissionfilter = this.togglePerissionfilter.bind(this);
+                this.toggleVisibilityFilter = this.toggleVisibilityFilter.bind(this);
                 /* this.handleOnChange({ target: { value: "ghp_..." } })*/
+            }
+
+            toggleVisibilityFilter(visibility) {
+                const ctx = this;
+
+                ctx.setState(prevState => {
+                    return {
+                        visibility_filter: {
+                            ...prevState.visibility_filter,
+                            [visibility]: !prevState.visibility_filter[visibility]
+                        }
+                    }
+                });
             }
 
             togglePerissionfilter(permission) {
                 const ctx = this;
-                console.log(permission)
 
                 ctx.setState(prevState => {
                     return {
@@ -353,7 +376,6 @@
 
             toggleRepoCatVisibility(org) {
                 const ctx = this;
-                console.log(org)
 
                 ctx.setState(prevState => {
                     return {
@@ -456,6 +478,24 @@
                     }, {});
                 }
 
+                const visibilityToFilter = Object.fromEntries(Object.entries(this.state.visibility_filter).filter(visibility => {
+                    return visibility[1]
+                }));
+
+                if (!!Object.keys(visibilityToFilter).length) {
+                    repos = Object.entries(repos).reduce((filteredObjects, [cat, value]) => {
+                        return Object.assign(filteredObjects, {
+                            [cat]: Object.assign({}, value, {
+                                repos: value.repos.filter(repo => {
+                                    return Object.entries(visibilityToFilter).some(([pKey, pValue]) => {
+                                        return repo.visibility === pKey
+                                    }) ;
+                                })
+                            })
+                        });
+                    }, {});
+                }
+
                 return (
                     React.createElement("div", { id: "app" },
                         React.createElement("div", { className: "wrap-sidebar" },
@@ -464,9 +504,11 @@
                                 appTitle: this.state.appTitle,
                                 user: this.state.user,
                                 repos: repos,
-                                toggleRepoCatVisibility: this.toggleRepoCatVisibility,
                                 repo_permissions_filter: this.state.repo_permissions_filter,
-                                togglePerissionfilter: this.togglePerissionfilter
+                                visibility_filter: this.state.visibility_filter,
+                                toggleRepoCatVisibility: this.toggleRepoCatVisibility,
+                                togglePerissionfilter: this.togglePerissionfilter,
+                                toggleVisibilityFilter: this.toggleVisibilityFilter
                             })),
 
                         React.createElement("main", { className: "main-content" },
