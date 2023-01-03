@@ -75,6 +75,7 @@
 
         .sidebar__user {
             text-align: center;
+            margin-top: 1rem;
         }
 
         .sidebar__user .avatar {
@@ -115,30 +116,51 @@
             border-radius: 4px;
         }
 
-        .sidebar__user .orgs .org {
-            cursor: pointer;
-            margin: 0.5rem;
-            padding: 0.25rem 0.5rem;
-            background: #21262d;
-            font-size: 0.85em;
-            border-radius: 4px;
-        }
-
-        .sidebar__user .orgs .org.active {
-            background-color: #02040a;
-        }
-
-        .sidebar__user .orgs h4 {
-            padding-top: 2rem;
-            margin-bottom: 1rem;
-        }
-
         .sidebar__user .github-link {
             display: inline-block;
             margin-top: 2rem;
             font-size: 0.85em;
             text-decoration: none;
             color: #8c949e;
+        }
+
+        .sidebar-box {
+            text-align: left;
+            color: #8b949e;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-box h4 {
+            margin-top: 0;
+            color: #c9d1d9;
+            font-size: 14px;
+        }
+
+        .sidebar-box ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .sidebar-box ul li {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .sidebar-box ul li:hover {
+            background-color: #161b22;
+        }
+
+        .sidebar-box ul li.active {
+            background-color: #1f6eeb;
+            color: #fff;
         }
 
         .repositories {
@@ -171,6 +193,10 @@
         }
 
         .repositories ul .repositories__visibility.public {
+            background: #238636;
+        }
+
+        .repositories ul .repositories__visibility.private {
             background: #238636;
         }
 
@@ -228,7 +254,7 @@
 
         const org_render = (repos, toggleRepoCatVisibility) => {
             return Object.keys(repos).map((org, i) => {
-                return React.createElement("div", { className: repos[org].showing ? "org active" : "org", key: org, onClick: () => toggleRepoCatVisibility(org) }, org)
+                return React.createElement("li", { className: `org ${repos[org].showing ? "active" : ""}`, key: org, onClick: () => toggleRepoCatVisibility(org) }, org)
             })
         }
 
@@ -239,15 +265,23 @@
 
                 React.createElement("input", { className: "sidebar__pat", placeholder: "Github access token", onChange: props.onPatChange }),
 
-                props.user != null && props.repos ?
+                props.user != null && props.repos && props.repo_permissions_filter ?
                     React.createElement("div", { className: "sidebar__user" },
                         React.createElement("img", { className: "avatar", src: props.user.avatar_url }),
                         React.createElement("h2", { className: "username" }, props.user.name),
                         React.createElement("h4", { className: "login" }, props.user.login),
                         React.createElement("div", { className: "bio" }, props.user.email),
-                        React.createElement("div", { className: "orgs" },
+                        React.createElement("div", { className: "orgs sidebar-box" },
                             React.createElement("h4", null, "Organizations"),
-                            org_render(props.repos, props.toggleRepoCatVisibility)),
+                            React.createElement("ul", null,
+                                org_render(props.repos, props.toggleRepoCatVisibility))
+                        ),
+                        React.createElement("div", { className: "sidebar__permission_filter sidebar-box" },
+                            React.createElement("h4", null, "Permissions"),
+                            React.createElement("ul", { className: "filter-list" },
+                                Object.keys(props.repo_permissions_filter).map((permission, i) => React.createElement("li", { className: `${props.repo_permissions_filter[permission] ? "active" : ""}`, onClick: () => props.togglePerissionfilter(permission), key: permission }, permission))
+                            )
+                        ),
                         React.createElement("a", { className: "github-link", target: "_blank", href: props.user.html_url }, "See on GitHub")) :
                     React.createElement("p", null, "Loading..."));
 
@@ -289,10 +323,32 @@
                         apiUrl: 'https://api.github.com/',
                         user: null,
                         repos: null,
+                        repo_permissions_filter: {
+                            admin: false,
+                            maintain: false,
+                            push: false,
+                            triage: false,
+                            pull: false
+                        }
                     });
                 this.onPatChange = this.handleOnChange.bind(this);
                 this.toggleRepoCatVisibility = this.toggleRepoCatVisibility.bind(this);
-                /* this.handleOnChange({ target: { value: "ghp_..." } }) */
+                this.togglePerissionfilter = this.togglePerissionfilter.bind(this);
+                /* this.handleOnChange({ target: { value: "ghp_..." } })*/
+            }
+
+            togglePerissionfilter(permission) {
+                const ctx = this;
+                console.log(permission)
+
+                ctx.setState(prevState => {
+                    return {
+                        repo_permissions_filter: {
+                            ...prevState.repo_permissions_filter,
+                            [permission]: !prevState.repo_permissions_filter[permission]
+                        }
+                    }
+                });
             }
 
             toggleRepoCatVisibility(org) {
@@ -310,8 +366,6 @@
                         }
                     }
                 });
-
-
             }
 
             handleOnChange(e) {
@@ -380,10 +434,27 @@
 
             render() {
 
-                const sorted_repos = this.state.repos == null? {} : Object.fromEntries(
+                var repos = this.state.repos == null ? {} : Object.fromEntries(
                     Object.entries(this.state.repos)
                         .sort(([key1], [key2]) => key1 === 'Personal' ? -1 : key2 === 'Personal' ? 1 : key1.localeCompare(key2))
                 )
+
+
+                const permissionsToFilter = Object.fromEntries(Object.entries(this.state.repo_permissions_filter).filter(permission => {
+                    return permission[1]
+                }));
+
+                if (!!Object.keys(permissionsToFilter).length) {
+                    repos = Object.entries(repos).reduce((filteredObjects, [cat, value]) => {
+                        return Object.assign(filteredObjects, {
+                            [cat]: Object.assign({}, value, {
+                                repos: value.repos.filter(repo => {
+                                    return Object.entries(permissionsToFilter).some(([pKey, pValue]) => repo.permissions[pKey] === pValue);
+                                })
+                            })
+                        });
+                    }, {});
+                }
 
                 return (
                     React.createElement("div", { id: "app" },
@@ -392,13 +463,15 @@
                                 onPatChange: this.onPatChange,
                                 appTitle: this.state.appTitle,
                                 user: this.state.user,
-                                repos: sorted_repos,
-                                toggleRepoCatVisibility: this.toggleRepoCatVisibility
+                                repos: repos,
+                                toggleRepoCatVisibility: this.toggleRepoCatVisibility,
+                                repo_permissions_filter: this.state.repo_permissions_filter,
+                                togglePerissionfilter: this.togglePerissionfilter
                             })),
 
                         React.createElement("main", { className: "main-content" },
                             React.createElement(Repositiories, {
-                                repos: sorted_repos
+                                repos: repos
                             }),
                             React.createElement("footer", null))));
 
