@@ -417,7 +417,7 @@
                                 ctx.setState(prevState => ({
                                     repos: {                   // object that we want to update
                                         ...prevState.repos,    // keep all other key-value pairs
-                                        Personal: { showing: true, repos: repos }
+                                        Personal: { showing: true, repos: repos.concat(ctx?.state?.repos?.Personal || []) }
                                     }
                                 }))
 
@@ -434,11 +434,11 @@
                                 res.data.forEach(org => {
                                     ctx.getAllRepos(org.repos_url, headers).
                                         then(function (repos) {
-
+                                            
                                             ctx.setState(prevState => ({
                                                 repos: {                   // object that we want to update
                                                     ...prevState.repos,    // keep all other key-value pairs
-                                                    [org.login]: { showing: false, repos: repos }
+                                                    [org.login]: { showing: false, repos: repos.concat(ctx?.state?.repos[org.login]?.repos || []) }
                                                 }
                                             }))
 
