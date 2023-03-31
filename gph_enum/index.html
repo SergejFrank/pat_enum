@@ -154,6 +154,10 @@
             cursor: pointer;
         }
 
+        .sidebar-box ul li .org__repos_count{
+            float: right;
+        }
+
         .sidebar-box ul li:hover {
             background-color: #161b22;
         }
@@ -254,7 +258,8 @@
 
         const org_render = (repos, toggleRepoCatVisibility) => {
             return Object.keys(repos).map((org, i) => {
-                return React.createElement("li", { className: `org ${repos[org].showing ? "active" : ""}`, key: org, onClick: () => toggleRepoCatVisibility(org) }, org)
+                return React.createElement("li", { className: `org ${repos[org].showing ? "active" : ""}`, key: org, onClick: () => toggleRepoCatVisibility(org) }, org,
+                React.createElement("span", { className: "org__repos_count"}, repos[org].repos.length))
             })
         }
 
@@ -406,13 +411,13 @@
                         //console.log(ctx.state.user);
 
                         // search for user's repos
-                        axios.get(ctx.state.apiUrl + 'user/repos', headers).
-                            then(function (res) {
+                        ctx.getAllRepos(ctx.state.apiUrl + 'user/repos', headers).
+                            then(function (repos) {
 
                                 ctx.setState(prevState => ({
                                     repos: {                   // object that we want to update
                                         ...prevState.repos,    // keep all other key-value pairs
-                                        Personal: { showing: true, repos: res.data }
+                                        Personal: { showing: true, repos: repos }
                                     }
                                 }))
 
@@ -427,13 +432,13 @@
 
                                 // search for orgs's repos
                                 res.data.forEach(org => {
-                                    axios.get(org.repos_url, headers).
-                                        then(function (res) {
+                                    ctx.getAllRepos(org.repos_url, headers).
+                                        then(function (repos) {
 
                                             ctx.setState(prevState => ({
                                                 repos: {                   // object that we want to update
                                                     ...prevState.repos,    // keep all other key-value pairs
-                                                    [org.login]: { showing: false, repos: res.data }
+                                                    [org.login]: { showing: false, repos: repos }
                                                 }
                                             }))
 
@@ -453,6 +458,43 @@
                         alert(error.response.data.message)
                         console.log(error);
                     });
+            }
+
+            async getAllRepos(url, headers) {
+                const allRepos = [];
+                const perPage = 100; // Max number of results per page
+                let currentPage = 1;
+                let hasNextPage = true;
+
+                while (hasNextPage) {
+                    try {
+                        const response = await axios.get(
+                            url,
+                            {
+                                headers: headers.headers,
+                                params: {
+                                    per_page: perPage,
+                                    page: currentPage,
+                                },
+                            }
+                        );
+
+                        const repos = response.data;
+                        allRepos.push(...repos);
+
+                        if (repos.length < perPage) {
+                            hasNextPage = false;
+                        } else {
+                            currentPage++;
+                        }
+                    } catch (error) {
+                        console.error("Error fetching repositories:", error);
+                        hasNextPage = false;
+                    }
+                }
+
+                return allRepos;
+
             }
 
             render() {
@@ -490,7 +532,7 @@
                                 repos: value.repos.filter(repo => {
                                     return Object.entries(visibilityToFilter).some(([pKey, pValue]) => {
                                         return repo.visibility === pKey
-                                    }) ;
+                                    });
                                 })
                             })
                         });
