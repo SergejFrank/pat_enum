@@ -482,7 +482,7 @@
                         const repos = response.data;
                         allRepos.push(...repos);
 
-                        if (repos.length < perPage) {
+                        if (repos.length < perPage || currentPage >= 100 ) {
                             hasNextPage = false;
                         } else {
                             currentPage++;
