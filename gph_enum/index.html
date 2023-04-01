@@ -313,7 +313,7 @@
                                     React.createElement("li", { className: "repo", key: repo.id },
                                         repo.visibility == "public" ?
                                         /* public */    React.createElement("a", { href: repo.html_url, target: "_blank" }, React.createElement("h4", null, repo.name)) :
-                                        /* private */    React.createElement("h4", null, repo.name),
+                                        /* private */    React.createElement("a", { href: repo.html_url, target: "_blank" }, React.createElement("h4", null, repo.name)),
                                         React.createElement("span", { className: `repositories__visibility ${repo.visibility}` }, repo.visibility),
                                         React.createElement("p", null, repo.description),
                                         React.createElement("p", { className: "repositories__permission" },
