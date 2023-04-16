@@ -279,7 +279,9 @@
                         React.createElement("div", { className: "orgs sidebar-box" },
                             React.createElement("h4", null, "Organizations"),
                             React.createElement("ul", null,
-                                org_render(props.repos, props.toggleRepoCatVisibility))
+                                props.loading_repos > 0 ?  React.createElement("li",{ className: "loading_repos" }, "...loading"): "",
+                                org_render(props.repos, props.toggleRepoCatVisibility)
+                                )
                         ),
                         React.createElement("div", { className: "sidebar__permission_filter sidebar-box" },
                             React.createElement("h4", null, "Permissions"),
@@ -334,6 +336,7 @@
                         apiUrl: 'https://api.github.com/',
                         user: null,
                         repos: null,
+                        loading_repos: 0,
                         visibility_filter: {
                             public: false,
                             private: false,
@@ -414,11 +417,18 @@
                         ctx.getAllRepos(ctx.state.apiUrl + 'user/repos', headers).
                             then(function (repos) {
 
-                                ctx.setState(prevState => ({
-                                    repos: {                   // object that we want to update
-                                        ...prevState.repos,    // keep all other key-value pairs
-                                        Personal: { showing: true, repos: repos.concat(ctx?.state?.repos?.Personal || []) }
+                                var reposByOwner = ctx?.state?.repos || {}
+
+                                repos.forEach(repo => {
+                                    if(repo.owner.login in reposByOwner){
+                                        reposByOwner[repo.owner.login].repos.push(repo)
+                                    }else{
+                                        reposByOwner[repo.owner.login] = { showing: repo.owner.login == ctx?.state?.user?.login, repos: [repo] }
                                     }
+                                })
+
+                                ctx.setState(prevState => ({
+                                    repos: reposByOwner
                                 }))
 
                             }).
@@ -435,11 +445,18 @@
                                     ctx.getAllRepos(org.repos_url, headers).
                                         then(function (repos) {
                                             
-                                            ctx.setState(prevState => ({
-                                                repos: {                   // object that we want to update
-                                                    ...prevState.repos,    // keep all other key-value pairs
-                                                    [org.login]: { showing: false, repos: repos.concat(ctx?.state?.repos[org.login]?.repos || []) }
+                                            var reposByOwner = ctx?.state?.repos || {}
+
+                                            repos.forEach(repo => {
+                                                if(repo.owner.login in reposByOwner){
+                                                    reposByOwner[repo.owner.login].repos.push(repo)
+                                                }else{
+                                                    reposByOwner[repo.owner.login] = { showing: repo.owner.login == ctx?.state?.user?.login, repos: [repo] }
                                                 }
+                                            })
+
+                                            ctx.setState(prevState => ({
+                                                repos: reposByOwner
                                             }))
 
                                         }).
@@ -461,12 +478,14 @@
             }
 
             async getAllRepos(url, headers) {
+                const ctx = this;
                 const allRepos = [];
                 const perPage = 100; // Max number of results per page
                 let currentPage = 1;
                 let hasNextPage = true;
 
                 while (hasNextPage) {
+                    ctx.setState({ loading_repos: this.state.loading_repos + 1 })
                     try {
                         const response = await axios.get(
                             url,
@@ -487,7 +506,9 @@
                         } else {
                             currentPage++;
                         }
+                        ctx.setState({ loading_repos: this.state.loading_repos - 1 })
                     } catch (error) {
+                        ctx.setState({ loading_repos: this.state.loading_repos - 1 })
                         console.error("Error fetching repositories:", error);
                         hasNextPage = false;
                     }
@@ -501,7 +522,7 @@
 
                 var repos = this.state.repos == null ? {} : Object.fromEntries(
                     Object.entries(this.state.repos)
-                        .sort(([key1], [key2]) => key1 === 'Personal' ? -1 : key2 === 'Personal' ? 1 : key1.localeCompare(key2))
+                        .sort(([key1], [key2]) => key1 == this.state.user.login ? -1 : key2 == this.state.user.login ? 1 : key1.localeCompare(key2))
                 )
 
 
@@ -547,6 +568,7 @@
                                 appTitle: this.state.appTitle,
                                 user: this.state.user,
                                 repos: repos,
+                                loading_repos:this.state.loading_repos,
                                 repo_permissions_filter: this.state.repo_permissions_filter,
                                 visibility_filter: this.state.visibility_filter,
                                 toggleRepoCatVisibility: this.toggleRepoCatVisibility,
