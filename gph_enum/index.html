@@ -420,7 +420,7 @@
                                 var reposByOwner = ctx?.state?.repos || {}
 
                                 repos.forEach(repo => {
-                                    if(repo.owner.login in reposByOwner){
+                                    if(repo.owner.login in reposByOwner && !reposByOwner[repo.owner.login].repos.some(e => e.full_name === repo.full_name)){
                                         reposByOwner[repo.owner.login].repos.push(repo)
                                     }else{
                                         reposByOwner[repo.owner.login] = { showing: repo.owner.login == ctx?.state?.user?.login, repos: [repo] }
@@ -448,7 +448,7 @@
                                             var reposByOwner = ctx?.state?.repos || {}
 
                                             repos.forEach(repo => {
-                                                if(repo.owner.login in reposByOwner){
+                                                if(repo.owner.login in reposByOwner && !reposByOwner[repo.owner.login].repos.some(e => e.full_name === repo.full_name)){
                                                     reposByOwner[repo.owner.login].repos.push(repo)
                                                 }else{
                                                     reposByOwner[repo.owner.login] = { showing: repo.owner.login == ctx?.state?.user?.login, repos: [repo] }
