@@ -500,7 +500,7 @@
                         const repos = response.data;
                         allRepos.push(...repos);
 
-                        if (repos.length < perPage || currentPage >= 25) {
+                        if (repos.length < perPage) {
                             hasNextPage = false;
                         } else {
                             currentPage++;
