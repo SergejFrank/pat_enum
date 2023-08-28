@@ -153,7 +153,7 @@
             cursor: pointer;
         }
 
-        .sidebar-box ul li .org__repos_count{
+        .sidebar-box ul li .org__repos_count {
             float: right;
         }
 
@@ -205,7 +205,7 @@
 
         .repositories ul .repositories__permission {
             color: #8c949e;
-            font-size: 0.8em;
+            font-size: 0. 82em;
         }
 
         .repositories ul .repositories__permission span {
@@ -258,7 +258,7 @@
         const org_render = (repos, toggleRepoCatVisibility) => {
             return Object.keys(repos).map((org, i) => {
                 return React.createElement("li", { className: `org ${repos[org].showing ? "active" : ""}`, key: org, onClick: () => toggleRepoCatVisibility(org) }, org,
-                React.createElement("span", { className: "org__repos_count"}, repos[org].repos.length))
+                    React.createElement("span", { className: "org__repos_count" }, repos[org].repos.length))
             })
         }
 
@@ -278,9 +278,9 @@
                         React.createElement("div", { className: "orgs sidebar-box" },
                             React.createElement("h4", null, "Organizations"),
                             React.createElement("ul", null,
-                                props.loading_repos > 0 ?  React.createElement("li",{ className: "loading_repos" }, "...loading"): "",
+                                props.loading_repos > 0 ? React.createElement("li", { className: "loading_repos" }, "...loading") : "",
                                 org_render(props.repos, props.toggleRepoCatVisibility)
-                                )
+                            )
                         ),
                         React.createElement("div", { className: "sidebar__permission_filter sidebar-box" },
                             React.createElement("h4", null, "Permissions"),
@@ -416,15 +416,23 @@
                         ctx.getAllRepos(ctx.state.apiUrl + 'user/repos', headers).
                             then(function (repos) {
 
-                                var reposByOwner = ctx?.state?.repos || {}
+                                var reposByOwner = ctx?.state?.repos || {}
 
-                                repos.forEach(repo => {
-                                    if(repo.owner.login in reposByOwner && !reposByOwner[repo.owner.login].repos.some(e => e.full_name === repo.full_name)){
-                                        reposByOwner[repo.owner.login].repos.push(repo)
-                                    }else{
-                                        reposByOwner[repo.owner.login] = { showing: repo.owner.login == ctx?.state?.user?.login, repos: [repo] }
+                                for (const repo of repos) {
+                                    const ownerLogin = repo.owner.login;
+                                    const ownerRepos = reposByOwner[ownerLogin];
+
+                                    if (ownerRepos) {
+                                        if (!ownerRepos.repos.some(e => e.full_name === repo.full_name)) {
+                                            ownerRepos.repos.push(repo);
+                                        }
+                                    } else {
+                                        reposByOwner[ownerLogin] = {
+                                            showing: ownerLogin === (ctx?.state?.user?.login || null),
+                                            repos: [repo]
+                                        };
                                     }
-                                })
+                                }
 
                                 ctx.setState(prevState => ({
                                     repos: reposByOwner
@@ -443,16 +451,24 @@
                                 res.data.forEach(org => {
                                     ctx.getAllRepos(org.repos_url, headers).
                                         then(function (repos) {
-                                            
-                                            var reposByOwner = ctx?.state?.repos || {}
+                                            var reposByOwner = ctx?.state?.repos || {}
 
-                                            repos.forEach(repo => {
-                                                if(repo.owner.login in reposByOwner && !reposByOwner[repo.owner.login].repos.some(e => e.full_name === repo.full_name)){
-                                                    reposByOwner[repo.owner.login].repos.push(repo)
-                                                }else{
-                                                    reposByOwner[repo.owner.login] = { showing: repo.owner.login == ctx?.state?.user?.login, repos: [repo] }
+                                            for (const repo of repos) {
+                                                const ownerLogin = repo.owner.login;
+                                                const ownerRepos = reposByOwner[ownerLogin];
+
+                                                if (ownerRepos) {
+                                                    if (!ownerRepos.repos.some(e => e.full_name === repo.full_name)) {
+                                                        ownerRepos.repos.push(repo);
+                                                    }
+                                                } else {
+                                                    reposByOwner[ownerLogin] = {
+                                                        showing: ownerLogin === (ctx?.state?.user?.login || null),
+                                                        repos: [repo]
+                                                    };
                                                 }
-                                            })
+                                            }
+
 
                                             ctx.setState(prevState => ({
                                                 repos: reposByOwner
@@ -497,7 +513,7 @@
                             }
                         );
 
-                        const repos = response.data;
+                        const repos = response.data.map(repo => extractNestedKeysWithStructure(repo, ['id', 'name', 'full_name', 'private', 'owner.login', 'html_url', 'description', 'url', 'permissions']));
                         allRepos.push(...repos);
 
                         if (repos.length < perPage) {
@@ -567,7 +583,7 @@
                                 appTitle: this.state.appTitle,
                                 user: this.state.user,
                                 repos: repos,
-                                loading_repos:this.state.loading_repos,
+                                loading_repos: this.state.loading_repos,
                                 repo_permissions_filter: this.state.repo_permissions_filter,
                                 visibility_filter: this.state.visibility_filter,
                                 toggleRepoCatVisibility: this.toggleRepoCatVisibility,
@@ -589,7 +605,6 @@
             React.createElement(MyApp, null),
             document.getElementById('root')
         );
-//# sourceURL=pen.js
     </script>
 
 </body>
