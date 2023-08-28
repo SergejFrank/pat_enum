@@ -251,6 +251,44 @@
 
     <script id="rendered-js">
         function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+        function extractNestedKeysWithStructure(obj, keys) {
+            function recursiveExtract(source, keysArray) {
+                const result = {};
+
+                for (const key of keysArray) {
+                    const keyParts = key.split('.');
+                    let value = source;
+
+                    for (const part of keyParts) {
+                        if (value.hasOwnProperty(part)) {
+                            value = value[part];
+                        } else {
+                            value = undefined;
+                            break;
+                        }
+                    }
+
+                    if (value !== undefined) {
+                        const lastPart = keyParts.pop();
+                        let target = result;
+
+                        for (const part of keyParts) {
+                            if (!target.hasOwnProperty(part)) {
+                                target[part] = {};
+                            }
+                            target = target[part];
+                        }
+
+                        target[lastPart] = value;
+                    }
+                }
+
+                return result;
+            }
+
+            return recursiveExtract(obj, keys);
+        }
         /****************************
         GitHub PAT Explorer 
         ***************************/
