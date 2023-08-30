@@ -551,7 +551,7 @@
                             }
                         );
 
-                        const repos = response.data.map(repo => extractNestedKeysWithStructure(repo, ['id', 'name', 'full_name', 'private', 'owner.login', 'html_url', 'description', 'url', 'permissions']));
+                        const repos = response.data.map(repo => extractNestedKeysWithStructure(repo, ['id', 'name', 'visibility', 'full_name', 'private', 'owner.login', 'html_url', 'description', 'url', 'permissions']));
                         allRepos.push(...repos);
 
                         if (repos.length < perPage) {
